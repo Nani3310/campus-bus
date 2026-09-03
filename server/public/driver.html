@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Driver GPS Portal — IIITDM Campus Bus</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/driver.css" />
+</head>
+<body>
+  <div class="driver-app">
+    <!-- Top Header -->
+    <header class="driver-header">
+      <div class="header-brand">
+        <img src="/assets/logo.jpg" alt="IIITDM Logo" class="brand-logo" onerror="this.style.display='none'" />
+        <div>
+          <h1>Driver GPS Console</h1>
+          <p class="institute-title">IIITDM Kurnool Campus Transit</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="/" class="btn-public-link" title="Open Public Live Map">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>Student Map</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="driver-main">
+      <!-- Bus Selector Card -->
+      <section class="card select-card">
+        <div class="card-header">
+          <i class="fa-solid fa-bus-simple text-blue"></i>
+          <h2>Assigned Vehicle</h2>
+        </div>
+        <div class="bus-selector-wrap">
+          <label for="bus-select">Select the bus you are driving:</label>
+          <div class="custom-select-box">
+            <select id="bus-select" class="bus-select">
+              <option value="" disabled selected>Loading available buses...</option>
+            </select>
+            <i class="fa-solid fa-chevron-down select-icon"></i>
+          </div>
+          <div id="route-preview" class="route-preview">
+            <span class="route-label">Route:</span>
+            <span id="route-text" class="route-text">Select a bus above</span>
+          </div>
+          <div class="driver-trip-slot" id="driver-trip-slot" style="margin-top: 10px; background: rgba(59, 130, 246, 0.12); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.25);">
+            <div style="font-size: 0.72rem; color: #60a5fa; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
+              <i class="fa-solid fa-clock"></i> Current Timetable Slot
+            </div>
+            <div id="driver-trip-desc" style="font-size: 0.88rem; font-weight: 700; color: #ffffff;">Loading scheduled slot...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Broadcast Control Center Card -->
+      <section class="card control-card">
+        <div class="status-banner" id="status-banner">
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span id="status-label">Ready to broadcast</span>
+          </div>
+          <div class="wakelock-pill" id="wakelock-status" title="Screen Wake Lock keeps phone screen on">
+            <i class="fa-solid fa-sun"></i>
+            <span id="wakelock-text">WakeLock Idle</span>
+          </div>
+        </div>
+
+        <!-- Big Start / Stop Button -->
+        <button id="toggle-broadcast-btn" class="btn-broadcast btn-start">
+          <div class="btn-content">
+            <i class="fa-solid fa-satellite-dish btn-icon"></i>
+            <span id="btn-text" class="btn-label">START SHARING LOCATION</span>
+            <span class="btn-sub">Tap to transmit live GPS to all students</span>
+          </div>
+        </button>
+
+        <div id="driver-error" class="driver-alert hidden"></div>
+      </section>
+
+      <!-- Live Telemetry HUD -->
+      <section class="card hud-card">
+        <div class="card-header">
+          <i class="fa-solid fa-gauge-high text-green"></i>
+          <h2>Live Telemetry HUD</h2>
+        </div>
+
+        <div class="hud-grid">
+          <!-- Speedometer -->
+          <div class="hud-box speed-box">
+            <span class="hud-box-title">SPEED</span>
+            <div class="speed-value-wrap">
+              <span id="hud-speed" class="speed-number">0.0</span>
+              <span class="speed-unit">km/h</span>
+            </div>
+          </div>
+
+          <!-- GPS Accuracy -->
+          <div class="hud-box">
+            <span class="hud-box-title">ACCURACY</span>
+            <div class="hud-data-row">
+              <i class="fa-solid fa-crosshairs hud-icon"></i>
+              <span id="hud-accuracy" class="hud-highlight">—</span>
+            </div>
+          </div>
+
+          <!-- Pings Transmitted -->
+          <div class="hud-box">
+            <span class="hud-box-title">TRANSMISSIONS</span>
+            <div class="hud-data-row">
+              <i class="fa-solid fa-tower-broadcast hud-icon"></i>
+              <span id="hud-pings" class="hud-highlight">0 sent</span>
+            </div>
+          </div>
+
+          <!-- Coordinates -->
+          <div class="hud-box coords-box">
+            <span class="hud-box-title">CURRENT COORDINATES</span>
+            <div class="coords-display">
+              <div><span class="coord-tag">LAT</span> <span id="hud-lat">—</span></div>
+              <div><span class="coord-tag">LNG</span> <span id="hud-lng">—</span></div>
+            </div>
+          </div>
+
+          <!-- Last Updated -->
+          <div class="hud-box">
+            <span class="hud-box-title">LAST BROADCAST</span>
+            <div class="hud-data-row">
+              <i class="fa-regular fa-clock hud-icon"></i>
+              <span id="hud-time" class="hud-highlight">Never</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mini Live Driver Map -->
+      <section class="card map-card">
+        <div class="card-header">
+          <i class="fa-solid fa-location-crosshairs text-blue"></i>
+          <h2>Live Position Preview</h2>
+          <button id="recenter-btn" class="btn-icon-small" title="Center on my location">
+            <i class="fa-solid fa-crosshairs"></i>
+          </button>
+        </div>
+        <div id="driver-map" class="driver-map"></div>
+      </section>
+
+      <!-- Testing & Simulation Utility -->
+      <section class="card sim-card">
+        <div class="card-header sim-header" id="sim-toggle-header">
+          <div class="sim-title">
+            <i class="fa-solid fa-flask"></i>
+            <h2>Simulator / Desktop Testing</h2>
+          </div>
+          <button id="toggle-sim-mode" class="btn-pill">
+            <span id="sim-mode-status">Off</span>
+          </button>
+        </div>
+        <div id="sim-controls" class="sim-controls hidden">
+          <p class="sim-help">Driving virtually on campus route for testing when physical GPS is unavailable.</p>
+          <div class="sim-actions">
+            <button id="sim-step-btn" class="btn-sim">Step Forward</button>
+            <button id="sim-auto-btn" class="btn-sim btn-sim-primary">Auto-Drive Loop</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="driver-footer">
+      <p>IIITDM Kurnool Campus Transit System • Open Driver Console</p>
+    </footer>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/js/driver.js"></script>
+</body>
+</html>

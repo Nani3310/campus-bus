@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>IIITDM Kurnool — Live Campus Bus & Timetable</title>
+  <meta name="description" content="Real-time live GPS tracking and official timetable for IIITDM Kurnool campus transit bus." />
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/css/app.css?v=3.0" />
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <button id="toggle-sidebar-btn" class="btn-sidebar-toggle" aria-label="Toggle bus list">
+          <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+        <div class="brand-group">
+          <img class="header-logo" src="/assets/logo.jpg" alt="IIITDM Kurnool Logo" onerror="this.style.display='none'" />
+          <div class="brand-text">
+            <h1 class="header-title">IIITDM Kurnool</h1>
+            <span class="header-subtitle">Live Campus Transit Tracker</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="system-status-pill" id="system-status">
+          <span class="status-pulse-dot"></span>
+          <span id="status-text">Connecting to live feed...</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button id="open-timetable-btn" class="header-btn btn-highlight" onclick="openTimetable()" title="View Full Bus Timetable">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span class="btn-label-desktop">Timetable</span>
+        </button>
+
+        <button id="recenter-campus-btn" class="header-btn" title="Center Campus">
+          <i class="fa-solid fa-building-columns"></i>
+          <span class="btn-label-desktop">Campus</span>
+        </button>
+
+        <a href="/driver" class="btn-driver-portal" target="_blank" title="Open Driver Location Update Console">
+          <i class="fa-solid fa-id-card-clip"></i>
+          <span>Driver Console</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <div class="main-workspace">
+      <!-- Bus List & Details Sidebar / Drawer -->
+      <aside class="bus-sidebar" id="bus-sidebar">
+        <!-- Next Bus / Current Trip Hero Card -->
+        <div class="next-bus-card" id="next-bus-card">
+          <div class="next-bus-header">
+            <div class="next-bus-badge" id="next-bus-badge">
+              <span class="badge-dot"></span>
+              <span id="badge-status-text">Next Bus</span>
+            </div>
+            <button id="quick-open-timetable" class="link-btn" onclick="openTimetable()" title="Open Timetable">
+              View Schedule <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <div class="next-trip-body">
+            <div class="trip-route-row">
+              <span class="trip-stop-from" id="hero-from-stop">IIITDM Kurnool</span>
+              <i class="fa-solid fa-arrow-right-long trip-arrow-icon"></i>
+              <span class="trip-stop-to" id="hero-to-stop">C-Camp</span>
+            </div>
+            
+            <div class="trip-time-row">
+              <div class="trip-time-item">
+                <span class="time-label">Pickup</span>
+                <span class="time-val" id="hero-pickup-time">06:30 AM</span>
+              </div>
+              <div class="trip-countdown-box">
+                <span class="countdown-label" id="hero-countdown-label">DEPARTS IN</span>
+                <span class="countdown-clock" id="hero-countdown-clock">--:--</span>
+              </div>
+              <div class="trip-time-item">
+                <span class="time-label">Drop</span>
+                <span class="time-val" id="hero-drop-time">07:00 AM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-header">
+          <div class="sidebar-title-row">
+            <h2>Campus Shuttle</h2>
+            <span class="bus-count-badge" id="bus-count-badge">City Shuttle</span>
+          </div>
+          <p class="sidebar-desc">Real-time GPS coordinates, live vehicle speed & stops.</p>
+        </div>
+
+        <!-- Bus Cards Container -->
+        <div class="bus-cards-list" id="bus-cards-list">
+          <div class="loading-state">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <p>Loading shuttle status...</p>
+          </div>
+        </div>
+
+        <!-- Route Stops Information Panel -->
+        <div class="stops-panel" id="stops-panel">
+          <div class="stops-panel-header">
+            <h3><i class="fa-solid fa-route"></i> Transit Stop Points</h3>
+            <span id="selected-route-name" class="route-badge">5 Stops in Kurnool</span>
+          </div>
+          <div class="timeline-container" id="timeline-container">
+            <p class="no-selection-msg">Loading stops...</p>
+          </div>
+        </div>
+
+        <!-- Driver Info Footer -->
+        <div class="sidebar-footer">
+          <div class="driver-card-promo">
+            <div class="promo-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+            <div class="promo-text">
+              <strong>Are you the driver?</strong>
+              <p>Share your live location from your phone.</p>
+            </div>
+            <a href="/driver" class="btn-promo-action">Open</a>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Map View Container -->
+      <main class="map-wrapper">
+        <div id="map" class="map-canvas"></div>
+
+        <!-- Floating Map Quick-Controls -->
+        <div class="floating-controls">
+          <button id="btn-locate-user" class="map-ctrl-btn" title="My Location">
+            <i class="fa-solid fa-crosshairs"></i>
+          </button>
+          <button id="btn-toggle-follow" class="map-ctrl-btn" title="Follow Active Bus">
+            <i class="fa-solid fa-location-arrow"></i>
+          </button>
+          <button id="btn-layer-switch" class="map-ctrl-btn" title="Switch Map View">
+            <i class="fa-solid fa-layer-group"></i>
+          </button>
+        </div>
+
+        <!-- Live Selected Bus Floating HUD -->
+        <div class="floating-bus-hud hidden" id="floating-bus-hud">
+          <div class="hud-bus-info">
+            <div class="hud-icon-box" id="hud-color-indicator">
+              <i class="fa-solid fa-bus"></i>
+            </div>
+            <div>
+              <h3 id="hud-bus-name">City Shuttle</h3>
+              <p id="hud-bus-sub">Live Speed: 24 km/h • Updated just now</p>
+            </div>
+          </div>
+          <button class="hud-close-btn" id="hud-close-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Timetable Modal Dialog -->
+  <div class="modal-backdrop" id="timetable-modal" style="display: none !important;" onclick="if(event.target===this)closeTimetable(event)">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <i class="fa-solid fa-bus-simple"></i>
+          </div>
+          <div>
+            <h2>IIITDM Kurnool Bus Timetable</h2>
+            <p class="modal-subtitle" id="modal-today-info">Official Bus Timings & Pickup/Drop Points</p>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="close-timetable-modal" onclick="closeTimetable(event)" aria-label="Close modal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Tabs & Direction Filters -->
+      <div class="modal-toolbar">
+        <div class="modal-tabs">
+          <button class="modal-tab active" data-schedule="today" id="tab-today">
+            <i class="fa-solid fa-calendar-check"></i> Today
+          </button>
+          <button class="modal-tab" data-schedule="weekday" id="tab-weekday">
+            Monday - Friday
+          </button>
+          <button class="modal-tab" data-schedule="weekend" id="tab-weekend">
+            Saturday / Sunday / Holidays
+          </button>
+        </div>
+
+        <div class="filter-pills">
+          <button class="filter-pill active" data-dir="all">All Trips</button>
+          <button class="filter-pill" data-dir="from_campus">From Campus 🏫</button>
+          <button class="filter-pill" data-dir="to_campus">To Campus 🏙️</button>
+        </div>
+      </div>
+
+      <!-- Schedule Table Body -->
+      <div class="modal-body">
+        <div class="schedule-table-wrap">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Pickup Point</th>
+                <th>Pickup Time</th>
+                <th></th>
+                <th>Destination</th>
+                <th>Drop Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="timetable-tbody">
+              <!-- Dynamically rendered rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-footer-legend">
+          <span class="legend-item"><span class="legend-dot active"></span> Active Trip</span>
+          <span class="legend-item"><span class="legend-dot upcoming"></span> Next Trip</span>
+        </div>
+        <button class="btn btn-primary-close" id="btn-done-modal" onclick="closeTimetable(event)">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <script src="/js/app.js?v=3.0"></script>
+</body>
+</html>

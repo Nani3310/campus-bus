@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server/src/index.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "server/public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/driver",
+      "dest": "/server/public/driver.html"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/server/src/index.js"
+    },
+    {
+      "src": "/socket.io/(.*)",
+      "dest": "/server/src/index.js"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/server/public/css/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "/server/public/js/$1"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/server/public/assets/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/server/public/$1"
+    }
+  ]
+}
