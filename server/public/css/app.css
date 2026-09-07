@@ -1058,6 +1058,8 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
 .bus-vehicle-marker {
   position: relative;
   display: flex;
@@ -1066,6 +1068,7 @@ html, body {
   justify-content: center;
   cursor: pointer;
 }
+
 
 .bus-logo-badge {
   width: 52px;
@@ -1184,45 +1187,379 @@ html, body {
 
 .hidden { display: none !important; }
 
-/* Responsive Breakpoints */
+/* Sidebar Overlay Backdrop for Mobile */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 940;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.sidebar-backdrop.active {
+  display: block;
+  opacity: 1;
+}
+
+.btn-sidebar-close {
+  display: none;
+  background: #f1f5f9;
+  border: 1px solid var(--card-border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-sidebar-close:hover {
+  background: #e2e8f0;
+  color: var(--text-main);
+}
+
+.sidebar-actions-mobile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ================= Responsive Breakpoints ================= */
+@media (max-width: 900px) {
+  :root {
+    --sidebar-width: 340px;
+  }
+}
+
 @media (max-width: 768px) {
+  :root {
+    --header-height: 56px;
+  }
+
+  /* Header Mobile Optimization */
+  .app-header {
+    padding: 0 10px;
+    height: var(--header-height);
+  }
+
+  .header-left {
+    gap: 8px;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
   .btn-sidebar-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .brand-group {
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .header-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .brand-text {
+    min-width: 0;
+  }
+
+  .header-title {
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .header-subtitle {
+    display: none;
   }
 
   .header-center {
     display: none;
   }
 
+  .header-right {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .header-btn {
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    justify-content: center;
+  }
+
+  .header-btn i {
+    font-size: 0.95rem;
+  }
+
   .btn-label-desktop {
     display: none;
   }
 
+  .btn-driver-portal {
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    justify-content: center;
+  }
+
+  .btn-driver-portal span {
+    display: none;
+  }
+
+  .btn-driver-portal i {
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  /* Sidebar Drawer on Mobile */
   .bus-sidebar {
-    position: absolute;
+    position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
     width: 320px;
+    max-width: 85vw;
+    z-index: 950;
     transform: translateX(-100%);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    background: #ffffff;
   }
 
   .bus-sidebar.open {
     transform: translateX(0);
   }
 
-  .modal-window {
-    max-height: 95vh;
+  .btn-sidebar-close {
+    display: flex;
   }
 
-  .modal-toolbar {
+  /* Next Bus Hero Card on Mobile */
+  .next-bus-card {
+    margin: 10px 12px 4px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .trip-route-row {
+    font-size: 0.85rem;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .trip-stop-from,
+  .trip-stop-to {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 44%;
+  }
+
+  .trip-countdown-box {
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+
+  .countdown-label {
+    font-size: 0.55rem;
+  }
+
+  .countdown-clock {
+    font-size: 0.98rem;
+  }
+
+  .sidebar-header {
+    padding: 10px 14px 8px;
+  }
+
+  .bus-cards-list {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .bus-card {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .stops-panel {
     padding: 10px 14px;
   }
 
+  /* Floating Map HUD & Controls */
+  .floating-controls {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+
+  .map-ctrl-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+  }
+
+  .floating-bus-hud {
+    bottom: 12px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    width: calc(100% - 20px);
+    min-width: unset;
+    max-width: unset;
+    padding: 10px 14px;
+    border-radius: 12px;
+    gap: 10px;
+  }
+
+  .hud-icon-box {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+  }
+
+  .hud-bus-info h3 {
+    font-size: 0.88rem;
+  }
+
+  .hud-bus-info p {
+    font-size: 0.72rem;
+  }
+
+  /* Timetable Modal Mobile Bottom Sheet */
+  .modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-window {
+    max-height: 88vh;
+    border-radius: 20px 20px 0 0;
+    animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUpModal {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .modal-header {
+    padding: 12px 16px;
+  }
+
+  .modal-icon-badge {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    border-radius: 8px;
+  }
+
+  .modal-header h2 {
+    font-size: 0.98rem;
+  }
+
+  .modal-subtitle {
+    font-size: 0.72rem;
+  }
+
+  .modal-toolbar {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .modal-tabs {
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .modal-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .modal-tab {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .filter-pills {
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filter-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-pill {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
   .modal-body {
-    padding: 12px 14px;
+    padding: 8px 10px;
+  }
+
+  .schedule-table th {
+    padding: 8px 6px;
+    font-size: 0.7rem;
+  }
+
+  .schedule-table td {
+    padding: 8px 6px;
+    font-size: 0.76rem;
+  }
+
+  .modal-footer {
+    padding: 8px 12px;
+  }
+
+  .modal-footer-legend {
+    font-size: 0.72rem;
+    gap: 10px;
+  }
+
+  .btn-primary-close {
+    padding: 6px 14px;
+    font-size: 0.8rem;
   }
 }
+
+@media (max-width: 380px) {
+  .header-title {
+    font-size: 0.82rem;
+    max-width: 105px;
+  }
+}
+

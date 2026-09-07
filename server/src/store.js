@@ -178,6 +178,7 @@ function createStore() {
           speed_kmh: payload.speedKmh,
           heading: payload.heading,
           satellites: payload.satellites,
+          accuracy_meters: payload.accuracyMeters,
           recorded_at: payload.recordedAt || new Date().toISOString(),
         });
       } catch (err) {

@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server/src/index.js",
     "dev": "node --watch server/src/index.js",
+    "test:onelap": "node server/scripts/test-onelap.js",
     "install:server": "cd server && npm install"
   },
   "dependencies": {

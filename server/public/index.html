@@ -60,6 +60,9 @@
 
     <!-- Main Workspace Container -->
     <div class="main-workspace">
+      <!-- Sidebar Overlay Backdrop for Mobile -->
+      <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
       <!-- Bus List & Details Sidebar / Drawer -->
       <aside class="bus-sidebar" id="bus-sidebar">
         <!-- Next Bus / Current Trip Hero Card -->
@@ -101,7 +104,12 @@
         <div class="sidebar-header">
           <div class="sidebar-title-row">
             <h2>Campus Shuttle</h2>
-            <span class="bus-count-badge" id="bus-count-badge">City Shuttle</span>
+            <div class="sidebar-actions-mobile">
+              <span class="bus-count-badge" id="bus-count-badge">City Shuttle</span>
+              <button class="btn-sidebar-close" id="btn-sidebar-close" title="Close sidebar" aria-label="Close sidebar">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
           </div>
           <p class="sidebar-desc">Real-time GPS coordinates, live vehicle speed & stops.</p>
         </div>

@@ -37,11 +37,20 @@ CREATE TABLE IF NOT EXISTS telemetry (
   recorded_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Ensure all columns exist even if telemetry table was created in an older version
+ALTER TABLE telemetry ADD COLUMN IF NOT EXISTS speed_kmh DOUBLE PRECISION;
+ALTER TABLE telemetry ADD COLUMN IF NOT EXISTS heading DOUBLE PRECISION;
+ALTER TABLE telemetry ADD COLUMN IF NOT EXISTS satellites INTEGER;
+ALTER TABLE telemetry ADD COLUMN IF NOT EXISTS accuracy_meters DOUBLE PRECISION;
+ALTER TABLE telemetry ADD COLUMN IF NOT EXISTS recorded_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
 -- Index for fast query of latest coordinates per bus
 CREATE INDEX IF NOT EXISTS telemetry_bus_time ON telemetry (bus_id, recorded_at DESC);
 
 -- 4. Latest GPS View (for live map and realtime sync)
-CREATE OR REPLACE VIEW bus_latest AS
+DROP VIEW IF EXISTS bus_latest CASCADE;
+
+CREATE VIEW bus_latest AS
 SELECT DISTINCT ON (bus_id)
   bus_id,
   lat,

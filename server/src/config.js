@@ -7,4 +7,14 @@ module.exports = {
     lat: Number(process.env.CAMPUS_LAT || 15.761411),
     lng: Number(process.env.CAMPUS_LNG || 78.039151),
   },
+  onelap: {
+    enabled: process.env.ONELAP_ENABLED === "true" || process.env.ONELAP_ENABLED === "1",
+    baseUrl: (process.env.ONELAP_BASE_URL || "https://web.onelap.in").replace(/\/+$/, ""),
+    phone: process.env.ONELAP_PHONE || "",
+    password: process.env.ONELAP_PASSWORD || "",
+    deviceId: process.env.ONELAP_DEVICE_ID || "",
+    busId: process.env.ONELAP_BUS_ID || "BUS-01",
+    pollIntervalMs: Math.max(2000, Number(process.env.ONELAP_POLL_INTERVAL_MS || 5000)),
+  },
 };
+

@@ -87,7 +87,28 @@ All endpoints are open and public:
 
 ---
 
-## 5. Simulating GPS for Testing
+## 5. Onelap Micro GPS Hardware Integration
+
+You can bypass driver phone location access entirely using a **Onelap Micro GPS** hardware tracker installed in the bus:
+
+1. Add your Onelap account credentials to `server/.env`:
+   ```env
+   ONELAP_ENABLED=true
+   ONELAP_PHONE=your_registered_phone_number
+   ONELAP_PASSWORD=your_onelap_password
+   ONELAP_DEVICE_ID=115491
+   ONELAP_BUS_ID=BUS-01
+   ONELAP_POLL_INTERVAL_MS=5000
+   ```
+2. Test connection and view live GPS diagnostics:
+   ```powershell
+   node server/scripts/test-onelap.js
+   ```
+3. Start the server (`npm start`). The backend automatically polls Onelap Cloud in real-time, ingests satellite telemetry, and broadcasts live vehicle positions to all students.
+
+---
+
+## 6. Simulating GPS for Testing
 
 To test bus movement on desktop without a physical drive, you can:
 1. Use the **Simulator / Desktop Testing** panel directly on [http://localhost:8080/driver](http://localhost:8080/driver) (click "Step Forward" or "Auto-Drive Loop").
@@ -96,3 +117,4 @@ To test bus movement on desktop without a physical drive, you can:
    cd server
    npm run simulate
    ```
+

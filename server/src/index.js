@@ -7,6 +7,7 @@ const { Server } = require("socket.io");
 const config = require("./config");
 const { createStore } = require("./store");
 const schedule = require("./schedule");
+const { createOnelapService } = require("./integrations/onelap");
 
 const app = express();
 const server = http.createServer(app);
@@ -14,6 +15,7 @@ const io = new Server(server, {
   cors: { origin: "*" },
 });
 const store = createStore();
+const onelap = createOnelapService({ config, store, io });
 
 app.use(cors());
 app.use(express.json({ limit: "32kb" }));
@@ -26,12 +28,24 @@ app.get("/driver", (_req, res) => {
 
 // API Routes (All Public - No Authentication Required)
 app.get("/api/v1/health", (_req, res) => {
-  res.json({ ok: true, campus: config.campus });
+  res.json({
+    ok: true,
+    campus: config.campus,
+    onelap: {
+      enabled: config.onelap.enabled,
+      status: onelap.getStatus(),
+    },
+  });
+});
+
+app.get("/api/v1/integrations/onelap/status", (_req, res) => {
+  res.json(onelap.getStatus());
 });
 
 app.get("/api/v1/campus", (_req, res) => {
   res.json(config.campus);
 });
+
 
 // Schedule API
 app.get("/api/v1/schedule", (_req, res) => {
@@ -120,12 +134,22 @@ async function start() {
     console.warn("Seed info:", err.message);
   }
 
+  // Start Onelap hardware GPS poller if enabled
+  if (config.onelap.enabled) {
+    onelap.start();
+  }
+
   server.listen(config.port, "0.0.0.0", () => {
     console.log(`\n=================================================`);
     console.log(`🚌 Campus Bus Live Tracker Server is running!`);
     console.log(`📍 Public Tracker Webpage : http://localhost:${config.port}/`);
     console.log(`📱 Driver GPS Update Page : http://localhost:${config.port}/driver`);
     console.log(`📡 Ingest API Endpoint   : POST http://localhost:${config.port}/api/v1/telemetry`);
+    if (config.onelap.enabled) {
+      console.log(`🛰️ Onelap GPS Ingestion  : ACTIVE (Device #${config.onelap.deviceId} -> Bus ${config.onelap.busId})`);
+    } else {
+      console.log(`🛰️ Onelap GPS Ingestion  : DISABLED (Set ONELAP_ENABLED=true in .env to activate)`);
+    }
     console.log(`=================================================\n`);
   });
 }

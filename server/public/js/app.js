@@ -12,9 +12,13 @@ const timelineContainer = document.getElementById("timeline-container");
 const recenterCampusBtn = document.getElementById("recenter-campus-btn");
 const toggleSidebarBtn = document.getElementById("toggle-sidebar-btn");
 const busSidebar = document.getElementById("bus-sidebar");
+const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+const btnSidebarClose = document.getElementById("btn-sidebar-close");
+
 const btnLocateUser = document.getElementById("btn-locate-user");
 const btnToggleFollow = document.getElementById("btn-toggle-follow");
 const btnLayerSwitch = document.getElementById("btn-layer-switch");
+
 
 // Hero Banner UI References
 const heroFromStop = document.getElementById("hero-from-stop");
@@ -351,17 +355,21 @@ function renderBusCards() {
       </div>
     `;
 
-    card.onclick = () => selectBus(bus.id);
+    card.onclick = () => selectBus(bus.id, true);
     busCardsList.appendChild(card);
   });
 }
 
 // 8. Select Bus & Update Map View
-function selectBus(busId) {
+function selectBus(busId, fromUser = false) {
   selectedBusId = busId;
   renderBusCards();
   renderStopsTimeline(busId);
   updateFloatingHUD(busId);
+
+  if (fromUser && window.innerWidth <= 768) {
+    closeSidebar();
+  }
 
   const bus = buses.find((b) => b.id === busId);
   if (!bus) return;
@@ -373,6 +381,7 @@ function selectBus(busId) {
     }
   }
 }
+
 
 // 9. Render Stops Timeline
 function renderStopsTimeline(busId) {
@@ -707,14 +716,42 @@ filterPills.forEach((pill) => {
   });
 });
 
-// Quick Action Controls
-recenterCampusBtn.addEventListener("click", () => {
-  map.flyTo(IIITDM_CAMPUS, 14, { duration: 1 });
-});
+// Sidebar Drawer Control
+function openSidebar() {
+  if (busSidebar) busSidebar.classList.add("open");
+  if (sidebarBackdrop) sidebarBackdrop.classList.add("active");
+}
 
-toggleSidebarBtn.addEventListener("click", () => {
-  busSidebar.classList.toggle("open");
-});
+function closeSidebar() {
+  if (busSidebar) busSidebar.classList.remove("open");
+  if (sidebarBackdrop) sidebarBackdrop.classList.remove("active");
+}
+
+// Quick Action Controls
+if (recenterCampusBtn) {
+  recenterCampusBtn.addEventListener("click", () => {
+    map.flyTo(IIITDM_CAMPUS, 14, { duration: 1 });
+  });
+}
+
+if (toggleSidebarBtn) {
+  toggleSidebarBtn.addEventListener("click", () => {
+    if (busSidebar && busSidebar.classList.contains("open")) {
+      closeSidebar();
+    } else {
+      openSidebar();
+    }
+  });
+}
+
+if (btnSidebarClose) {
+  btnSidebarClose.addEventListener("click", closeSidebar);
+}
+
+if (sidebarBackdrop) {
+  sidebarBackdrop.addEventListener("click", closeSidebar);
+}
+
 
 btnLocateUser.addEventListener("click", () => {
   if (!navigator.geolocation) {

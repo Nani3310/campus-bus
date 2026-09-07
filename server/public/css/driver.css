@@ -534,3 +534,34 @@ body {
 }
 
 .hidden { display: none !important; }
+
+@media (max-width: 480px) {
+  .driver-header {
+    padding: 12px 14px;
+  }
+  .driver-header h1 {
+    font-size: 0.98rem;
+  }
+  .institute-title {
+    font-size: 0.68rem;
+  }
+  .btn-public-link {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+  .driver-main {
+    padding: 10px;
+    gap: 12px;
+  }
+  .card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+  .btn-broadcast {
+    padding: 16px 14px;
+  }
+  .btn-label {
+    font-size: 0.98rem;
+  }
+}
+
