@@ -5,8 +5,8 @@ const STOPS = {
     id: "campus",
     name: "IIITDM Kurnool",
     shortName: "Campus",
-    lat: 15.761411,
-    lng: 78.039151,
+    lat: 15.761093,
+    lng: 78.038980,
     isCampus: true,
   },
   gpr: {

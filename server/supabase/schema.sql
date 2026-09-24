@@ -90,7 +90,7 @@ DELETE FROM stops WHERE bus_id = 'BUS-01';
 
 -- Seed Official Transit Stops with precise coordinates
 INSERT INTO stops (id, bus_id, name, lat, lng) VALUES
-  ('campus', 'BUS-01', 'IIITDM Kurnool Campus', 15.761411, 78.039151),
+  ('campus', 'BUS-01', 'IIITDM Kurnool Campus', 15.761093, 78.038980),
   ('gpr', 'BUS-01', 'Pulla Reddy Engineering College', 15.774741, 78.058717),
   ('nandyal', 'BUS-01', 'Nandyal Check post', 15.797984, 78.052022),
   ('ccamp', 'BUS-01', 'C Camp Circle', 15.807002, 78.042479),

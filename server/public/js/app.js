@@ -1,5 +1,5 @@
 // Public Real-Time Bus Tracker & Timetable Logic
-const IIITDM_CAMPUS = [15.761411, 78.039151];
+const IIITDM_CAMPUS = [15.761093, 78.038980];
 
 // UI References
 const systemStatusPill = document.getElementById("system-status");
@@ -250,12 +250,12 @@ function connectSocket() {
 
   socket.on("connect", () => {
     if (systemStatusPill) systemStatusPill.classList.add("live");
-    if (statusText) statusText.textContent = "Live GPS Connected";
+    if (statusText) statusText.textContent = window.innerWidth <= 768 ? "Live GPS" : "Live GPS Connected";
   });
 
   socket.on("disconnect", () => {
     if (systemStatusPill) systemStatusPill.classList.remove("live");
-    if (statusText) statusText.textContent = "Reconnecting feed...";
+    if (statusText) statusText.textContent = window.innerWidth <= 768 ? "Reconnecting" : "Reconnecting feed...";
   });
 
   socket.on("buses:snapshot", (snapshot) => {
@@ -692,10 +692,24 @@ filterPills.forEach((pill) => {
   });
 });
 
+const sheetExpandIndicator = document.getElementById("sheet-expand-indicator");
+
 // Sidebar / Mobile Bottom Sheet Control
 function toggleSheetExpand() {
   if (busSidebar) {
     busSidebar.classList.toggle("expanded");
+  }
+}
+
+function expandSheet() {
+  if (busSidebar) {
+    busSidebar.classList.add("expanded");
+  }
+}
+
+function collapseSheet() {
+  if (busSidebar) {
+    busSidebar.classList.remove("expanded");
   }
 }
 
@@ -710,6 +724,41 @@ function closeSidebar() {
     busSidebar.classList.remove("expanded");
   }
   if (sidebarBackdrop) sidebarBackdrop.classList.remove("active");
+}
+
+let touchStartY = 0;
+let touchStartX = 0;
+let isDraggingSheet = false;
+
+if (busSidebar) {
+  busSidebar.addEventListener("touchstart", (e) => {
+    if (window.innerWidth > 768) return;
+    touchStartY = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
+    isDraggingSheet = true;
+  }, { passive: true });
+
+  busSidebar.addEventListener("touchmove", (e) => {
+    if (!isDraggingSheet || window.innerWidth > 768) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - touchStartY;
+    const isExpanded = busSidebar.classList.contains("expanded");
+
+    // When collapsed, swiping UP expands the entire sheet
+    if (!isExpanded && deltaY < -20) {
+      expandSheet();
+      isDraggingSheet = false;
+    }
+    // When expanded, at top of scroll, swiping DOWN collapses the sheet
+    else if (isExpanded && busSidebar.scrollTop <= 5 && deltaY > 30) {
+      collapseSheet();
+      isDraggingSheet = false;
+    }
+  }, { passive: true });
+
+  busSidebar.addEventListener("touchend", () => {
+    isDraggingSheet = false;
+  }, { passive: true });
 }
 
 if (toggleSidebarBtn) {
@@ -728,6 +777,13 @@ if (toggleSidebarBtn) {
 
 if (sheetDragHandle) {
   sheetDragHandle.addEventListener("click", toggleSheetExpand);
+}
+
+if (sheetExpandIndicator) {
+  sheetExpandIndicator.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleSheetExpand();
+  });
 }
 
 if (btnSidebarClose) {

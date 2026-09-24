@@ -8,8 +8,8 @@ const busId = process.argv.includes("--bus")
 
 const base = process.env.SERVER_URL || "http://127.0.0.1:8080";
 const key = process.env.DEVICE_API_KEY || "campus-bus-gps-secret";
-const campusLat = Number(process.env.CAMPUS_LAT || 15.761411);
-const campusLng = Number(process.env.CAMPUS_LNG || 78.039151);
+const campusLat = Number(process.env.CAMPUS_LAT || 15.761093);
+const campusLng = Number(process.env.CAMPUS_LNG || 78.038980);
 
 let t = 0;
 

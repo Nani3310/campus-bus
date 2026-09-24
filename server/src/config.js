@@ -4,8 +4,8 @@ module.exports = {
   deviceApiKey: process.env.DEVICE_API_KEY || "campus-bus-gps-secret",
   campus: {
     name: process.env.CAMPUS_NAME || "IIITDM Kurnool",
-    lat: Number(process.env.CAMPUS_LAT || 15.761411),
-    lng: Number(process.env.CAMPUS_LNG || 78.039151),
+    lat: Number(process.env.CAMPUS_LAT || 15.761093),
+    lng: Number(process.env.CAMPUS_LNG || 78.038980),
   },
   onelap: {
     enabled: process.env.ONELAP_ENABLED === "true" || process.env.ONELAP_ENABLED === "1",

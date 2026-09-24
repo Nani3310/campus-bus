@@ -9,7 +9,7 @@ const DEFAULT_BUSES = [
     route: "IIITDM Kurnool ↔ G. Pulla Reddy ↔ Nandyal Check post ↔ C-Camp ↔ Raj Vihar",
     color: "#1E3A8A",
     stops: [
-      { id: "campus", name: "IIITDM Kurnool Campus", lat: 15.761411, lng: 78.039151 },
+      { id: "campus", name: "IIITDM Kurnool Campus", lat: 15.761093, lng: 78.038980 },
       { id: "gpr", name: "Pulla Reddy Engineering College", lat: 15.774741, lng: 78.058717 },
       { id: "nandyal", name: "Nandyal Check post", lat: 15.797984, lng: 78.052022 },
       { id: "ccamp", name: "C Camp Circle", lat: 15.807002, lng: 78.042479 },
