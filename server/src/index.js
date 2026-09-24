@@ -21,11 +21,6 @@ app.use(cors());
 app.use(express.json({ limit: "32kb" }));
 app.use(express.static(path.join(__dirname, "../public")));
 
-// Page route shortcuts
-app.get("/driver", (_req, res) => {
-  res.sendFile(path.join(__dirname, "../public/driver.html"));
-});
-
 // API Routes (All Public - No Authentication Required)
 app.get("/api/v1/health", (_req, res) => {
   res.json({
@@ -79,7 +74,7 @@ app.get("/api/v1/buses/:id", async (req, res) => {
   }
 });
 
-// Telemetry endpoint for Driver Web App and Hardware GPS modules
+// Telemetry endpoint for Hardware GPS modules and Tracker Ingestion
 app.post("/api/v1/telemetry", async (req, res) => {
   try {
     const { busId, lat, lng, speedKmh, heading, satellites, accuracyMeters, recordedAt } = req.body || {};
@@ -143,8 +138,7 @@ async function start() {
     console.log(`\n=================================================`);
     console.log(`🚌 Campus Bus Live Tracker Server is running!`);
     console.log(`📍 Public Tracker Webpage : http://localhost:${config.port}/`);
-    console.log(`📱 Driver GPS Update Page : http://localhost:${config.port}/driver`);
-    console.log(`📡 Ingest API Endpoint   : POST http://localhost:${config.port}/api/v1/telemetry`);
+    console.log(`📡 GPS Ingestion Endpoint : POST http://localhost:${config.port}/api/v1/telemetry`);
     if (config.onelap.enabled) {
       console.log(`🛰️ Onelap GPS Ingestion  : ACTIVE (Device #${config.onelap.deviceId} -> Bus ${config.onelap.busId})`);
     } else {

@@ -46,15 +46,10 @@
           <span class="btn-label-desktop">Timetable</span>
         </button>
 
-        <button id="recenter-campus-btn" class="header-btn" title="Center Campus">
-          <i class="fa-solid fa-building-columns"></i>
-          <span class="btn-label-desktop">Campus</span>
+        <button id="btn-refresh" class="header-btn btn-refresh" title="Refresh Live Bus Location" aria-label="Refresh">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span class="btn-label-desktop">Refresh</span>
         </button>
-
-        <a href="/driver" class="btn-driver-portal" target="_blank" title="Open Driver Location Update Console">
-          <i class="fa-solid fa-id-card-clip"></i>
-          <span>Driver Console</span>
-        </a>
       </div>
     </header>
 
@@ -65,6 +60,11 @@
 
       <!-- Bus List & Details Sidebar / Drawer -->
       <aside class="bus-sidebar" id="bus-sidebar">
+        <!-- Mobile Drawer Drag Handle -->
+        <div class="sheet-drag-handle" id="sheet-drag-handle">
+          <span class="drag-pill"></span>
+        </div>
+
         <!-- Next Bus / Current Trip Hero Card -->
         <div class="next-bus-card" id="next-bus-card">
           <div class="next-bus-header">
@@ -132,18 +132,6 @@
             <p class="no-selection-msg">Loading stops...</p>
           </div>
         </div>
-
-        <!-- Driver Info Footer -->
-        <div class="sidebar-footer">
-          <div class="driver-card-promo">
-            <div class="promo-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
-            <div class="promo-text">
-              <strong>Are you the driver?</strong>
-              <p>Share your live location from your phone.</p>
-            </div>
-            <a href="/driver" class="btn-promo-action">Open</a>
-          </div>
-        </div>
       </aside>
 
       <!-- Map View Container -->
@@ -152,14 +140,11 @@
 
         <!-- Floating Map Quick-Controls -->
         <div class="floating-controls">
-          <button id="btn-locate-user" class="map-ctrl-btn" title="My Location">
+          <button id="btn-recenter-bus" class="map-ctrl-btn" title="Center on Active Bus" aria-label="Center on Bus">
+            <i class="fa-solid fa-bus"></i>
+          </button>
+          <button id="btn-locate-user" class="map-ctrl-btn" title="My Location" aria-label="My Location">
             <i class="fa-solid fa-crosshairs"></i>
-          </button>
-          <button id="btn-toggle-follow" class="map-ctrl-btn" title="Follow Active Bus">
-            <i class="fa-solid fa-location-arrow"></i>
-          </button>
-          <button id="btn-layer-switch" class="map-ctrl-btn" title="Switch Map View">
-            <i class="fa-solid fa-layer-group"></i>
           </button>
         </div>
 

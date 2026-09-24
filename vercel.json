@@ -12,10 +12,6 @@
   ],
   "routes": [
     {
-      "src": "/driver",
-      "dest": "/server/public/driver.html"
-    },
-    {
       "src": "/api/(.*)",
       "dest": "/server/src/index.js"
     },

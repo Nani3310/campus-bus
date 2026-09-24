@@ -9,16 +9,18 @@ const busCountBadge = document.getElementById("bus-count-badge");
 const stopsPanel = document.getElementById("stops-panel");
 const selectedRouteName = document.getElementById("selected-route-name");
 const timelineContainer = document.getElementById("timeline-container");
-const recenterCampusBtn = document.getElementById("recenter-campus-btn");
 const toggleSidebarBtn = document.getElementById("toggle-sidebar-btn");
 const busSidebar = document.getElementById("bus-sidebar");
 const sidebarBackdrop = document.getElementById("sidebar-backdrop");
 const btnSidebarClose = document.getElementById("btn-sidebar-close");
+const sheetDragHandle = document.getElementById("sheet-drag-handle");
 
+// Header & Map Controls
+const openTimetableBtn = document.getElementById("open-timetable-btn");
+const quickOpenTimetable = document.getElementById("quick-open-timetable");
+const btnRefresh = document.getElementById("btn-refresh");
 const btnLocateUser = document.getElementById("btn-locate-user");
-const btnToggleFollow = document.getElementById("btn-toggle-follow");
-const btnLayerSwitch = document.getElementById("btn-layer-switch");
-
+const btnRecenterBus = document.getElementById("btn-recenter-bus");
 
 // Hero Banner UI References
 const heroFromStop = document.getElementById("hero-from-stop");
@@ -31,8 +33,6 @@ const nextBusBadge = document.getElementById("next-bus-badge");
 const badgeStatusText = document.getElementById("badge-status-text");
 
 // Timetable Modal References
-const openTimetableBtn = document.getElementById("open-timetable-btn");
-const quickOpenTimetable = document.getElementById("quick-open-timetable");
 const timetableModal = document.getElementById("timetable-modal");
 const closeTimetableModal = document.getElementById("close-timetable-modal");
 const btnDoneModal = document.getElementById("btn-done-modal");
@@ -54,35 +54,16 @@ let socket = null;
 let buses = [];
 let scheduleData = null;
 let selectedBusId = null;
-let followBus = false;
-let currentLayerIndex = 0;
-let tileLayers = [];
 
 // Timetable Modal State
 let activeScheduleTab = "today"; // "today", "weekday", "weekend"
 let activeDirectionFilter = "all"; // "all", "from_campus", "to_campus"
 
-// Marker & Layer References
+// Marker References
 let busMarkers = {}; // busId -> L.Marker
 let stopMarkers = {}; // stopId -> L.Marker
-let routePolylines = {}; // busId -> L.Polyline
-let tripHighlightPolyline = null;
 let campusMarker = null;
 let userMarker = null;
-
-// Tile Providers
-const MAP_LAYERS = [
-  {
-    name: "OpenStreetMap",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: "&copy; OpenStreetMap contributors",
-  },
-  {
-    name: "Carto Voyager",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-    attribution: "&copy; CARTO",
-  },
-];
 
 // 1. Initialize Leaflet Map
 function initMap() {
@@ -90,18 +71,13 @@ function initMap() {
     zoomControl: false,
   }).setView(IIITDM_CAMPUS, 14);
 
-  L.control.zoom({ position: "bottomright" }).addTo(map);
+  // Clean OpenStreetMap layer (Free & Open Source - No API Key Required)
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  }).addTo(map);
 
-  tileLayers = MAP_LAYERS.map((layerInfo) =>
-    L.tileLayer(layerInfo.url, {
-      attribution: layerInfo.attribution,
-      maxZoom: 19,
-    })
-  );
-
-  tileLayers[0].addTo(map);
-
-  // Campus Center Pin
+  // Campus Center Marker
   const campusIcon = L.divIcon({
     className: "campus-pin",
     html: `<div style="
@@ -138,7 +114,7 @@ async function loadSchedule() {
   }
 }
 
-// 3. Render All Stop Points on Map
+// 3. Render Official Stop Points on Map
 function renderAllStopsOnMap() {
   if (!scheduleData || !scheduleData.stops) return;
 
@@ -188,8 +164,12 @@ function updateNextBusBanner() {
     }
   }
 
+  if (!nextBusBadge || !badgeStatusText || !heroFromStop || !heroToStop || !heroPickupTime || !heroDropTime || !heroCountdownLabel || !heroCountdownClock) {
+    return;
+  }
+
   if (currentTrip) {
-    // There is an active trip en route right now!
+    // Active trip en route right now
     nextBusBadge.className = "next-bus-badge active-trip";
     badgeStatusText.textContent = "Bus En Route Now";
     heroFromStop.textContent = currentTrip.from;
@@ -203,7 +183,7 @@ function updateNextBusBanner() {
     const secStr = remainingSecs === 60 ? "00" : remainingSecs.toString().padStart(2, "0");
     heroCountdownClock.textContent = `${Math.max(0, remainingMins)}m ${secStr}s`;
   } else if (nextTrip) {
-    // An upcoming trip today
+    // Upcoming trip today
     nextBusBadge.className = "next-bus-badge";
     badgeStatusText.textContent = "Next Scheduled Bus";
     heroFromStop.textContent = nextTrip.from;
@@ -269,13 +249,13 @@ function connectSocket() {
   socket = io();
 
   socket.on("connect", () => {
-    systemStatusPill.classList.add("live");
-    statusText.textContent = "Live GPS Connected";
+    if (systemStatusPill) systemStatusPill.classList.add("live");
+    if (statusText) statusText.textContent = "Live GPS Connected";
   });
 
   socket.on("disconnect", () => {
-    systemStatusPill.classList.remove("live");
-    statusText.textContent = "Reconnecting feed...";
+    if (systemStatusPill) systemStatusPill.classList.remove("live");
+    if (statusText) statusText.textContent = "Reconnecting feed...";
   });
 
   socket.on("buses:snapshot", (snapshot) => {
@@ -290,10 +270,6 @@ function connectSocket() {
       buses.push(updatedBus);
     }
     updateBusesData(buses);
-
-    if (followBus && selectedBusId === updatedBus.id && updatedBus.live) {
-      map.panTo([updatedBus.live.lat, updatedBus.live.lng]);
-    }
   });
 }
 
@@ -307,12 +283,13 @@ function updateBusesData(busList) {
     renderStopsTimeline(selectedBusId);
     updateFloatingHUD(selectedBusId);
   } else if (buses.length > 0) {
-    selectBus(buses[0].id);
+    selectBus(buses[0].id, false);
   }
 }
 
 // 7. Render Sidebar Bus Cards
 function renderBusCards() {
+  if (!busCardsList) return;
   busCardsList.innerHTML = "";
 
   if (buses.length === 0) {
@@ -329,7 +306,7 @@ function renderBusCards() {
     let statusText = "Offline";
     if (bus.online) {
       statusClass = "online";
-      statusText = "Live Broadcast";
+      statusText = "Live GPS";
     } else if (bus.live) {
       statusClass = "stale";
       statusText = "Signal Stale";
@@ -360,45 +337,38 @@ function renderBusCards() {
   });
 }
 
-// 8. Select Bus & Update Map View
+// 8. Select Bus & Update Map View (NO popup balloon on marker)
 function selectBus(busId, fromUser = false) {
   selectedBusId = busId;
   renderBusCards();
   renderStopsTimeline(busId);
   updateFloatingHUD(busId);
 
-  if (fromUser && window.innerWidth <= 768) {
-    closeSidebar();
-  }
-
   const bus = buses.find((b) => b.id === busId);
   if (!bus) return;
 
   if (bus.live) {
-    map.flyTo([bus.live.lat, bus.live.lng], 15, { duration: 1.2 });
-    if (busMarkers[bus.id]) {
-      busMarkers[bus.id].openPopup();
-    }
+    map.flyTo([bus.live.lat, bus.live.lng], 15, { duration: 1 });
   }
 }
 
-
 // 9. Render Stops Timeline
 function renderStopsTimeline(busId) {
+  if (!timelineContainer) return;
   const bus = buses.find((b) => b.id === busId);
   if (!bus || !bus.stops || bus.stops.length === 0) {
-    selectedRouteName.textContent = "5 Key Stops";
+    if (selectedRouteName) selectedRouteName.textContent = "5 Key Stops";
     return;
   }
 
-  selectedRouteName.textContent = `${bus.stops.length} Key Stops in Kurnool`;
+  if (selectedRouteName) selectedRouteName.textContent = `${bus.stops.length} Key Stops in Kurnool`;
   timelineContainer.innerHTML = "";
 
-  bus.stops.forEach((stop) => {
+  bus.stops.forEach((stop, idx) => {
     const item = document.createElement("div");
     item.className = "stop-item";
     item.innerHTML = `
-      <div class="stop-bullet"></div>
+      <div class="stop-bullet">${idx + 1}</div>
       <span class="stop-name">${stop.name}</span>
       <i class="fa-solid fa-location-dot" style="color: #94a3b8; font-size: 0.8rem;"></i>
     `;
@@ -412,6 +382,7 @@ function renderStopsTimeline(busId) {
 
 // 10. Update Floating HUD
 function updateFloatingHUD(busId) {
+  if (!floatingBusHud) return;
   const bus = buses.find((b) => b.id === busId);
   if (!bus) {
     floatingBusHud.classList.add("hidden");
@@ -419,37 +390,28 @@ function updateFloatingHUD(busId) {
   }
 
   floatingBusHud.classList.remove("hidden");
-  hudBusName.textContent = bus.name;
-  hudColorIndicator.style.background = bus.color || "#3b82f6";
+  if (hudBusName) hudBusName.textContent = bus.name;
+  if (hudColorIndicator) hudColorIndicator.style.background = bus.color || "#3b82f6";
 
-  if (bus.live) {
+  if (bus.live && hudBusSub) {
     const speedStr = bus.live.speedKmh != null ? `${bus.live.speedKmh.toFixed(0)} km/h` : "Stationary";
-    const statusStr = bus.online ? "🟢 Live Broadcast" : "🟡 Signal Stale";
+    const statusStr = bus.online ? "🟢 Live GPS" : "🟡 Signal Stale";
     hudBusSub.textContent = `${statusStr} • ${speedStr} • ${timeAgo(bus.live.updatedAt)}`;
-  } else {
-    hudBusSub.textContent = "Offline • Waiting for vehicle GPS broadcast";
+  } else if (hudBusSub) {
+    hudBusSub.textContent = "Offline • Waiting for GPS signal";
   }
 }
 
-hudCloseBtn.onclick = () => {
-  floatingBusHud.classList.add("hidden");
-};
+if (hudCloseBtn && floatingBusHud) {
+  hudCloseBtn.onclick = () => {
+    floatingBusHud.classList.add("hidden");
+  };
+}
 
-// 11. Render Markers & Routes on Leaflet Map
+// 11. Render Markers on Leaflet Map (CLEAN - NO popup above bus logo)
 function renderMapElements() {
   buses.forEach((bus) => {
     const color = bus.color || "#1e3a8a";
-
-    // Polyline connecting stops
-    if (bus.stops && bus.stops.length > 0 && !routePolylines[bus.id]) {
-      const stopPoints = bus.stops.map((s) => [s.lat, s.lng]);
-      routePolylines[bus.id] = L.polyline(stopPoints, {
-        color: color,
-        weight: 3.5,
-        opacity: 0.5,
-        dashArray: "6, 8",
-      }).addTo(map);
-    }
 
     // Live Bus Marker
     if (bus.live) {
@@ -507,30 +469,60 @@ function renderMapElements() {
 
       if (!busMarkers[bus.id]) {
         const marker = L.marker(pos, { icon: busIcon }).addTo(map);
-        marker.on("click", () => selectBus(bus.id));
+        marker.on("click", () => selectBus(bus.id, true));
         busMarkers[bus.id] = marker;
       } else {
         busMarkers[bus.id].setLatLng(pos);
         busMarkers[bus.id].setIcon(busIcon);
       }
-
-      busMarkers[bus.id].bindPopup(`
-        <div style="font-family: var(--font-sans); padding: 4px;">
-          <h4 style="margin: 0 0 4px; color: ${color}; font-weight: 800;">${bus.name}</h4>
-          <p style="margin: 0 0 4px; font-size: 12px; color: #475569;">${bus.route || ""}</p>
-          <div style="font-size: 12px; font-weight: 700; color: #0f172a;">
-            ${bus.online ? "🟢 Live Broadcast" : "🟡 Signal Stale"} • ${speedText}
-          </div>
-          <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
-            Updated: ${new Date(bus.live.updatedAt).toLocaleTimeString()}
-          </div>
-        </div>
-      `);
+      // Note: No popup is bound to the bus marker to keep map view unobstructed!
     }
   });
 }
 
-// 12. Timetable Modal Management
+// 12. Refresh Data Action
+async function refreshData(showFeedback = true) {
+  if (btnRefresh) {
+    btnRefresh.classList.add("refreshing");
+    const icon = btnRefresh.querySelector("i");
+    if (icon) icon.classList.add("fa-spin");
+  }
+
+  try {
+    const [busesRes, scheduleRes] = await Promise.all([
+      fetch("/api/v1/buses?_t=" + Date.now()),
+      fetch("/api/v1/schedule?_t=" + Date.now()),
+    ]);
+    const busesData = await busesRes.json();
+    scheduleData = await scheduleRes.json();
+
+    if (busesData.buses) {
+      updateBusesData(busesData.buses);
+    }
+    renderAllStopsOnMap();
+    updateNextBusBanner();
+
+    // Center on active bus if available
+    if (selectedBusId) {
+      const bus = buses.find((b) => b.id === selectedBusId);
+      if (bus && bus.live) {
+        map.flyTo([bus.live.lat, bus.live.lng], 15, { duration: 0.8 });
+      }
+    }
+  } catch (err) {
+    console.error("Failed to refresh data:", err);
+  } finally {
+    if (btnRefresh) {
+      setTimeout(() => {
+        btnRefresh.classList.remove("refreshing");
+        const icon = btnRefresh.querySelector("i");
+        if (icon) icon.classList.remove("fa-spin");
+      }, 500);
+    }
+  }
+}
+
+// 13. Timetable Modal Management
 async function openTimetable(e) {
   if (e) {
     if (typeof e.preventDefault === "function") e.preventDefault();
@@ -623,10 +615,10 @@ function renderTimetableModal() {
 
     if (isActive) {
       rowClass += " row-active";
-      statusPill = `<span class="live-pill online" style="font-size: 10px;">🟢 ACTIVE NOW</span>`;
+      statusPill = `<span class="live-pill online" style="font-size: 10px;">🟢 ACTIVE</span>`;
     } else if (isNext) {
       rowClass += " row-next";
-      statusPill = `<span class="live-pill stale" style="font-size: 10px;">🟡 NEXT UP</span>`;
+      statusPill = `<span class="live-pill stale" style="font-size: 10px;">🟡 NEXT</span>`;
     }
 
     const tr = document.createElement("tr");
@@ -658,22 +650,6 @@ function highlightTripOnMap(trip) {
   const toStop = scheduleData.stops[trip.toKey];
 
   if (!fromStop || !toStop) return;
-
-  if (tripHighlightPolyline) {
-    map.removeLayer(tripHighlightPolyline);
-  }
-
-  tripHighlightPolyline = L.polyline(
-    [
-      [fromStop.lat, fromStop.lng],
-      [toStop.lat, toStop.lng],
-    ],
-    {
-      color: "#2563eb",
-      weight: 5,
-      opacity: 0.85,
-    }
-  ).addTo(map);
 
   const bounds = L.latLngBounds([
     [fromStop.lat, fromStop.lng],
@@ -716,32 +692,42 @@ filterPills.forEach((pill) => {
   });
 });
 
-// Sidebar Drawer Control
+// Sidebar / Mobile Bottom Sheet Control
+function toggleSheetExpand() {
+  if (busSidebar) {
+    busSidebar.classList.toggle("expanded");
+  }
+}
+
 function openSidebar() {
   if (busSidebar) busSidebar.classList.add("open");
   if (sidebarBackdrop) sidebarBackdrop.classList.add("active");
 }
 
 function closeSidebar() {
-  if (busSidebar) busSidebar.classList.remove("open");
+  if (busSidebar) {
+    busSidebar.classList.remove("open");
+    busSidebar.classList.remove("expanded");
+  }
   if (sidebarBackdrop) sidebarBackdrop.classList.remove("active");
-}
-
-// Quick Action Controls
-if (recenterCampusBtn) {
-  recenterCampusBtn.addEventListener("click", () => {
-    map.flyTo(IIITDM_CAMPUS, 14, { duration: 1 });
-  });
 }
 
 if (toggleSidebarBtn) {
   toggleSidebarBtn.addEventListener("click", () => {
-    if (busSidebar && busSidebar.classList.contains("open")) {
-      closeSidebar();
+    if (window.innerWidth <= 768) {
+      toggleSheetExpand();
     } else {
-      openSidebar();
+      if (busSidebar && busSidebar.classList.contains("open")) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
     }
   });
+}
+
+if (sheetDragHandle) {
+  sheetDragHandle.addEventListener("click", toggleSheetExpand);
 }
 
 if (btnSidebarClose) {
@@ -752,47 +738,58 @@ if (sidebarBackdrop) {
   sidebarBackdrop.addEventListener("click", closeSidebar);
 }
 
+// Quick Refresh Button Listener
+if (btnRefresh) {
+  btnRefresh.addEventListener("click", () => refreshData(true));
+}
 
-btnLocateUser.addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    alert("Geolocation is not supported by your browser.");
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const userCoords = [pos.coords.latitude, pos.coords.longitude];
-      if (!userMarker) {
-        userMarker = L.circleMarker(userCoords, {
-          radius: 8,
-          fillColor: "#3b82f6",
-          color: "#ffffff",
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.9,
-        }).addTo(map).bindPopup("<b>You are here</b>");
-      } else {
-        userMarker.setLatLng(userCoords);
+// Recenter on Bus
+if (btnRecenterBus) {
+  btnRecenterBus.addEventListener("click", () => {
+    if (selectedBusId) {
+      const bus = buses.find((b) => b.id === selectedBusId);
+      if (bus && bus.live) {
+        map.flyTo([bus.live.lat, bus.live.lng], 16, { duration: 0.8 });
+        return;
       }
-      map.flyTo(userCoords, 15);
-    },
-    (err) => alert("Could not fetch your location: " + err.message)
-  );
-});
+    }
+    // Fallback: first bus or campus
+    if (buses.length > 0 && buses[0].live) {
+      map.flyTo([buses[0].live.lat, buses[0].live.lng], 16, { duration: 0.8 });
+    } else {
+      map.flyTo(IIITDM_CAMPUS, 15, { duration: 0.8 });
+    }
+  });
+}
 
-btnToggleFollow.addEventListener("click", () => {
-  followBus = !followBus;
-  btnToggleFollow.classList.toggle("active", followBus);
-  if (followBus && selectedBusId) {
-    const bus = buses.find((b) => b.id === selectedBusId);
-    if (bus && bus.live) map.panTo([bus.live.lat, bus.live.lng]);
-  }
-});
-
-btnLayerSwitch.addEventListener("click", () => {
-  map.removeLayer(tileLayers[currentLayerIndex]);
-  currentLayerIndex = (currentLayerIndex + 1) % tileLayers.length;
-  tileLayers[currentLayerIndex].addTo(map);
-});
+// User Geolocation
+if (btnLocateUser) {
+  btnLocateUser.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const userCoords = [pos.coords.latitude, pos.coords.longitude];
+        if (!userMarker) {
+          userMarker = L.circleMarker(userCoords, {
+            radius: 8,
+            fillColor: "#3b82f6",
+            color: "#ffffff",
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9,
+          }).addTo(map).bindPopup("<b>You are here</b>");
+        } else {
+          userMarker.setLatLng(userCoords);
+        }
+        map.flyTo(userCoords, 16, { duration: 0.8 });
+      },
+      (err) => alert("Could not fetch your location: " + err.message)
+    );
+  });
+}
 
 function timeAgo(timestamp) {
   if (!timestamp) return "Never";
